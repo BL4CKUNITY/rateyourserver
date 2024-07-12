@@ -4,6 +4,9 @@ const path = require('path');
 const { Client, Collection, GatewayIntentBits, Partials } = require('discord.js');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
+const db = require('./utils/database');
+
+console.log('Starting bot...');
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
@@ -18,6 +21,8 @@ for (const file of commandFiles) {
     client.commands.set(command.data.name, command);
 }
 
+console.log('Loaded commands.');
+
 const eventFiles = fs.readdirSync(path.join(__dirname, 'events')).filter(file => file.endsWith('.js'));
 for (const file of eventFiles) {
     const event = require(`./events/${file}`);
@@ -27,6 +32,8 @@ for (const file of eventFiles) {
         client.on(event.name, (...args) => event.execute(...args));
     }
 }
+
+console.log('Loaded events.');
 
 const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_TOKEN);
 
@@ -41,8 +48,14 @@ const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_TOKEN);
 
         console.log('Successfully reloaded application (/) commands.');
     } catch (error) {
-        console.error(error);
+        console.error('Error reloading application (/) commands:', error);
     }
 })();
 
-client.login(process.env.DISCORD_TOKEN);
+client.on('ready', () => {
+    console.log(`Logged in as ${client.user.tag}!`);
+});
+
+client.login(process.env.DISCORD_TOKEN)
+    .then(() => console.log('Bot logged in successfully.'))
+    .catch(error => console.error('Error logging in:', error));
